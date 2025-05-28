@@ -456,24 +456,7 @@ void CInifile::Load(IReader* F, pcstr path, allow_include_func_t allow_include_f
             R_ASSERT(path && path[0]);
             if (_GetItem(str, 1, inc_name, '"'))
             {
-                string_path fn;
-                strconcat(sizeof fn, fn, path, inc_name);
-                if (!allow_include_func || allow_include_func(fn))
-                {
-                    IReader* I = FS.r_open(fn);
-#ifndef XR_PLATFORM_WINDOWS // XXX: replace with runtime check for case-sensitivity
-                    if (I == nullptr)
-                    {
-                        xr_fs_nostrlwr(inc_name);
-                        strconcat(fn, path, inc_name);
-                        I = FS.r_open(fn);
-                    }
-#endif
-                    R_ASSERT3(I, "Can't find include file:", inc_name);
-                    const xr_string inc_path = EFS_Utils::ExtractFilePath(fn);
-                    Load(I, inc_path.c_str(), allow_include_func);
-                    FS.r_close(I);
-                }
+                LoadInclude(inc_name, path, allow_include_func);
             }
         }
         else if (str[0] && str[0] == '[') // new section ?
@@ -605,7 +588,7 @@ void CInifile::Load(IReader* F, pcstr path, allow_include_func_t allow_include_f
                         //#ifdef DEBUG
                         // || *I.comment
                         //#endif
-                        )
+                    )
                         insert_item(Current, I);
                 }
             }
@@ -617,6 +600,44 @@ void CInifile::Load(IReader* F, pcstr path, allow_include_func_t allow_include_f
         if (I != DATA.end() && (*I)->Name == Current->Name)
             xrDebug::Fatal(DEBUG_INFO, "Duplicate section '%s' found.", *Current->Name);
         DATA.insert(I, Current);
+    }
+}
+
+
+void CInifile::LoadInclude(pcstr relativeIncludePath, pcstr includeBaseFolder, allow_include_func_t allow_include_func)
+{
+    string_path fullIncludePath;
+    strconcat(sizeof fullIncludePath, fullIncludePath, includeBaseFolder, relativeIncludePath);
+
+    if (allow_include_func && !allow_include_func(fullIncludePath))
+        return;
+
+    xr_string newIncludeBaseFolder = EFS_Utils::ExtractFilePath(fullIncludePath);
+
+    if (strstr(relativeIncludePath, "*.ltx"))
+    {
+        FS_FileSet globIncludeSet;
+        FS.file_list(globIncludeSet, newIncludeBaseFolder.c_str(), FS_ListFiles, relativeIncludePath);
+
+        for (const FS_File& file : globIncludeSet)
+        {
+            LoadInclude(file.name.c_str(), newIncludeBaseFolder.c_str(), allow_include_func);
+        }
+    }
+    else
+    {
+        IReader* I = FS.r_open(fullIncludePath);
+#ifndef XR_PLATFORM_WINDOWS // XXX: replace with runtime check for case-sensitivity
+        if (I == nullptr)
+        {
+            xr_fs_nostrlwr(inc_name);
+            strconcat(fn, path, inc_name);
+            I = FS.r_open(fn);
+        }
+#endif
+        R_ASSERT3(I, "Can't find include file:", relativeIncludePath);
+        Load(I, newIncludeBaseFolder.c_str(), allow_include_func);
+        FS.r_close(I);
     }
 }
 

@@ -70,6 +70,7 @@ private:
     Root DATA;
 
     void Load(IReader* F, pcstr path, allow_include_func_t allow_include_func = nullptr);
+    void LoadInclude(pcstr includeName, pcstr baseFilePath, allow_include_func_t allow_include_func);
 
 public:
     CInifile(IReader* F, pcstr path = nullptr, allow_include_func_t allow_include_func = nullptr);
