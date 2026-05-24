@@ -29,11 +29,11 @@ u16 CKinematics::LL_BoneID(LPCSTR B)
 {
     const auto I = std::lower_bound(bone_map_N->begin(), bone_map_N->end(), B, [](const auto& N, pcstr B)
     {
-        return xr_strcmp(*N.first, B) < 0;
+        return xr_strcmp(N.first.c_str(), B) < 0;
     });
     if (I == bone_map_N->end())
         return BI_NONE;
-    if (0 != xr_strcmp(*(I->first), B))
+    if (0 != xr_strcmp(I->first.c_str(), B))
         return BI_NONE;
     return u16(I->second);
 }
@@ -401,7 +401,7 @@ void CKinematics::LL_Validate()
                     BD.IK_data.ik_flags.set(SJointIKData::flBreakable, FALSE);
             }
 #ifdef DEBUG
-            Msg("! ERROR: Invalid breakable object: '%s'", *dbg_name);
+            Msg("! ERROR: Invalid breakable object: '%s'", dbg_name.c_str());
 #endif
         }
     }
@@ -493,7 +493,8 @@ void CKinematics::Release()
 
 void CKinematics::LL_SetBoneVisible(u16 bone_id, BOOL val, BOOL bRecursive)
 {
-    VERIFY(bone_id < LL_BoneCount());
+    R_ASSERT1_CURE(bone_id < LL_BoneCount(), { return; });
+
     u64 mask = u64(1) << bone_id;
     visimask.set(mask, val);
     if (!visimask.is(mask))

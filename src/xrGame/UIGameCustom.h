@@ -65,7 +65,6 @@ private:
     xr_vector<MPWeatherDesc> m_weathers;
 
 public:
-    const SGameTypeMaps& GetMapListFor(const shared_str& gameType);
     const SGameTypeMaps& GetMapListFor(const EGameIDs gameId);
     const xr_vector<MPWeatherDesc>& GetGameWeathers();
 
@@ -133,6 +132,9 @@ public:
     pcstr GetDebugType() override { return "CUIGameCustom"; }
     bool FillDebugTree(const CUIDebugState& debugState) override;
     void FillDebugInfo() override;
+
+private:
+    DECLARE_SCRIPT_REGISTER_FUNCTION(CDialogHolder);
 };
 
 extern CUIGameCustom* CurrentGameUI();

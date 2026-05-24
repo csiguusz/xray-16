@@ -1,4 +1,4 @@
-add_library(xrCore SHARED)
+add_library(xrCore)
 
 target_sources_grouped(
     TARGET xrCore
@@ -132,8 +132,6 @@ target_sources_grouped(
     TARGET xrCore
     NAME "Debug core"
     FILES
-    #Debug/MiniDump.cpp
-    #Debug/MiniDump.h
     xrDebug.cpp
     xrDebug.h
     xrDebug_macros.h
@@ -149,6 +147,14 @@ target_sources_grouped(
 #    Debug/DXGetErrorString.inl
 #    Debug/DXTrace.inl
 #)
+
+target_sources_grouped(
+    TARGET xrCore
+    NAME "Debug core\\StackTrace"
+    FILES
+    Debug/StackTrace.cpp
+    Debug/StackTrace.h
+)
 
 target_sources_grouped(
     TARGET xrCore
@@ -459,7 +465,7 @@ target_link_libraries(xrCore
     LZO::LZO
 )
 
-if (NOT CMAKE_SYSTEM_NAME STREQUAL "OpenBSD" AND NOT CMAKE_SYSTEM_NAME STREQUAL "NetBSD" AND NOT WIN32)
+if (NOT CMAKE_SYSTEM_NAME STREQUAL "OpenBSD" AND NOT CMAKE_SYSTEM_NAME STREQUAL "NetBSD" AND NOT WIN32 AND NOT HAIKU)
     target_link_libraries(xrCore
         PRIVATE
         dl
@@ -476,8 +482,8 @@ target_compile_definitions(xrCore
     GITHUB_RUN_ID=\"$ENV{GITHUB_RUN_ID}\"
     GITHUB_RUN_NUMBER=\"$ENV{GITHUB_RUN_NUMBER}\"
     GITHUB_REPOSITORY=\"$ENV{GITHUB_REPOSITORY}\"
-    GIT_INFO_CURRENT_COMMIT=\"${GIT_SHA1}\"
-    GIT_INFO_CURRENT_BRANCH=\"${GIT_BRANCH}\"
+    GIT_INFO_CURRENT_COMMIT=\"${XRAY_GIT_SHA}\"
+    GIT_INFO_CURRENT_BRANCH=\"${XRAY_GIT_BRANCH}\"
     OPENSSL_NO_DEPRECATED
 )
 
@@ -496,6 +502,8 @@ target_precompile_headers(xrCore
     stdafx.h
 )
 
-install(TARGETS xrCore LIBRARY
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-)
+if (BUILD_SHARED_LIBS)
+    install(TARGETS xrCore LIBRARY
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    )
+endif()

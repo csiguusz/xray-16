@@ -15,9 +15,9 @@ bool CUIMapFilters::Init(CUIXml& xml)
     constexpr std::tuple<eSpotsFilter, pcstr> filters[] =
     {
         { Treasures,      "filter_treasures" },
-        { QuestNpcs,      "filter_primary_objects" },
+        { QuestNpcs,      "filter_quest_npcs" },
         { SecondaryTasks, "filter_secondary_tasks" },
-        { PrimaryObjects, "filter_quest_npcs" },
+        { PrimaryObjects, "filter_primary_objects" },
     };
 
     for (const auto& [filter_id, filter_section] : filters)
@@ -177,7 +177,7 @@ CUICheckButton* CUIMapFilters::GetSelectedFilter() const
 
 bool CUIMapFilters::IsFilterEnabled(eSpotsFilter filter) const
 {
-    return m_filters[filter] && m_filters[filter]->GetCheck();
+    return !m_filters[filter] || m_filters[filter]->GetCheck();
 }
 
 void CUIMapFilters::SetFilterEnabled(eSpotsFilter filter, bool enable) const
