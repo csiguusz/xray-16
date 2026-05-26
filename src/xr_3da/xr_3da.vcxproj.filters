@@ -68,6 +68,7 @@
     <CopyFileToFolders Include="..\..\sdk\binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll">
       <Filter>dependencies</Filter>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="..\..\sdk\binaries\$(PlatformShortName)\libcrypto-3-x64.dll" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
