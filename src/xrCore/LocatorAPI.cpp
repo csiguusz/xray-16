@@ -258,7 +258,7 @@ const CLocatorAPI::file* CLocatorAPI::Register(
                 "second is the file that prevented the insertion.";
             R_ASSERT4(I2.second, failureDescription, path, I2.first->name);
         }
-        xr_strcpy(temp, sizeof temp, folder);
+        xr_strcpy(temp, sizeof temp, path);
         if (xr_strlen(temp))
             temp[xr_strlen(temp) - 1] = 0;
     }
