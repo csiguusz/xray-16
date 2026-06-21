@@ -191,8 +191,7 @@ BOOL motions_value::load(pcstr N, IReader* data, vecBones* bones)
         // sanity check
         xr_strlwr(mname);
         accel_map::iterator I = m_motion_map.find(mname);
-        VERIFY3(I != m_motion_map.end(), "Can't find motion:", mname);
-        VERIFY3(I->second == m_idx, "Invalid motion index:", mname);
+        VERIFY3(I != m_motion_map.end() && I->second == m_idx, "Can't find motion:", mname);
 #endif
         const u32 dwLen = MS->r_u32();
         for (u32 i = 0; i < bones->size(); i++)
