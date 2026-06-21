@@ -64,7 +64,7 @@ CEnvironment::CEnvironment()
     string_path filePath;
     const auto load_config = [&filePath](pcstr path) -> CInifile*
     {
-        if (FS.update_path(filePath, "$game_config$", path, false))
+        if (FS.update_path(filePath, "$game_config$", path, false) && FS.exist(filePath))
             return xr_new<CInifile>(filePath, true, true, false);
         return nullptr;
     };
@@ -72,6 +72,7 @@ CEnvironment::CEnvironment()
     m_ambients_config                = load_config("environment\\ambients.ltx");
     m_sound_channels_config          = load_config("environment\\sound_channels.ltx");
     m_effects_config                 = load_config("environment\\effects.ltx");
+    m_global_sun_pos_config          = load_config("environment\\sun_positions.ltx");
 }
 
 CEnvironment::~CEnvironment()
@@ -316,6 +317,7 @@ void CEnvironment::SelectEnv(EnvVec* envs, CEnvDescriptor*& e, float gt)
         e = *env;
     }
 }
+
 
 void CEnvironment::SelectEnvs(EnvVec* envs, CEnvDescriptor*& e0, CEnvDescriptor*& e1, float gt)
 {

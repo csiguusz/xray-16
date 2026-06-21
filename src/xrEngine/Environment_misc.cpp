@@ -313,9 +313,12 @@ void CEnvDescriptor::load(CEnvironment& environment, const CInifile& config, pcs
     cpcstr identifier = section ? section : m_identifier.c_str();
 
     Ivector3 tm = {0, 0, 0};
-    const int result = sscanf(m_identifier.c_str(), "%d:%d:%d", &tm.x, &tm.y, &tm.z);
-    R_ASSERT3(result == 3 && (tm.x >= 0) && (tm.x < 24) && (tm.y >= 0) && (tm.y < 60) && (tm.z >= 0) && (tm.z < 60),
-        "Incorrect weather time", m_identifier.c_str());
+    if (xr_strcmp(identifier, "default") != 0) {
+        const int result = sscanf(m_identifier.c_str(), "%d:%d:%d", &tm.x, &tm.y, &tm.z);
+        R_ASSERT3(result == 3 && (tm.x >= 0) && (tm.x < 24) && (tm.y >= 0) && (tm.y < 60) && (tm.z >= 0) && (tm.z < 60),
+            "Incorrect weather time", m_identifier.c_str());
+    }
+
     exec_time = tm.x * 3600.f + tm.y * 60.f + tm.z;
     exec_time_loaded = exec_time;
 
@@ -373,8 +376,10 @@ void CEnvDescriptor::load(CEnvironment& environment, const CInifile& config, pcs
 
     Fvector2 sunVec{};
 
-    if (config.read_if_exists(sunVec, identifier, "sun_dir"))
+    if (config.read_if_exists(sunVec, identifier, "sun_dir") || !config.line_exist(identifier, "sun_altitude") || !config.line_exist(identifier, "sun_longitude"))
+    {
         use_dynamic_sun_dir = false;
+    }
     else
     {
         sunVec.y = config.r_float(identifier, "sun_altitude");
@@ -596,8 +601,11 @@ void CEnvDescriptorMixer::lerp(CEnvironment& parent, CEnvDescriptor& A, CEnvDesc
 
     sun_azimuth = (fi * A.sun_azimuth + f * B.sun_azimuth);
 
-     // Igor. Dynamic sun position.
-    if (!GEnv.Render->is_sun_static() && use_dynamic_sun_dir)
+    if (!GEnv.Render->is_sun_static() && parent.global_sun_pos.has_value ()) 
+    {
+        calculate_global_sun_pos(exec_time, *parent.global_sun_pos);
+    }
+    else if (!GEnv.Render->is_sun_static() && use_dynamic_sun_dir)
     {
         auto [dir, blend] = calculate_dynamic_sun_dir(exec_time, sun_azimuth);
         sun_dir = dir;
@@ -719,6 +727,29 @@ std::pair<Fvector3, float> CEnvDescriptorMixer::calculate_dynamic_sun_dir(float 
         result,
         fSunBlend
     };
+}
+
+Fvector3 CEnvDescriptorMixer::calculate_global_sun_pos(float gameTime, const std::array<Fvector2, 24>& hourlySunPositions)
+{
+    const float current_hour = gameTime / (DAY_LENGTH / 24);
+    const int weather_time = iFloor(current_hour);
+    const float factor = current_hour - weather_time;
+
+    Fvector3 sunPosPrevHour;
+    sunPosPrevHour.setHP(deg2rad(hourlySunPositions[weather_time].x), deg2rad(hourlySunPositions[weather_time].y));
+
+    if (factor <= 0)
+        return sunPosPrevHour;
+
+    const int next_hour = weather_time == 23 ? 0 : weather_time + 1;
+    Fvector3 sunPosNextHour;
+    sunPosNextHour.setHP(deg2rad(hourlySunPositions[next_hour].x), deg2rad(hourlySunPositions[next_hour].y));
+ 
+    Fvector3 result;
+    result.lerp(sunPosPrevHour, sunPosNextHour, factor);
+
+    R_ASSERT(_valid(result));
+    return result;
 }
 
 //-----------------------------------------------------------------------------
@@ -982,6 +1013,28 @@ void CEnvironment::load_weather_effects()
     }
 }
 
+void CEnvironment::load_global_sun_position()
+{
+    if (m_global_sun_pos_config == nullptr) {
+        global_sun_pos.reset();
+        return;
+    }
+
+    global_sun_pos.emplace();
+
+    for (int i = 0; i < 24; i++) {
+        char sun_identifier[10];
+        sprintf(sun_identifier, i >= 10 ? "%d:00:00" : "0%d:00:00", i);
+
+        const float sun_alt = m_global_sun_pos_config->r_float(sun_identifier, "sun_altitude");
+        const float sun_long = m_global_sun_pos_config->r_float(sun_identifier, "sun_longitude");
+
+        R_ASSERT(_valid(sun_alt));
+        R_ASSERT(_valid(sun_long));
+        global_sun_pos.value()[i].set(sun_alt, sun_long);
+    }
+}
+
 void CEnvironment::load()
 {
     ZoneScoped;
@@ -995,6 +1048,7 @@ void CEnvironment::load()
 
     load_weathers();
     load_weather_effects();
+    load_global_sun_position();
 }
 
 void CEnvironment::unload()
@@ -1052,6 +1106,7 @@ void CEnvironment::save() const
 
     save_weathers(environment_config);
     save_weather_effects(environment_config);
+    // TODO save global sun position
 
     const bool soc_style = !environment_config->sections().empty();
     eff_LensFlare->save(soc_style);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "Include/xrRender/FactoryPtr.h"
 #include "Include/xrRender/EnvironmentRender.h"
 #include "xrCore/_vector3d.h"
@@ -153,7 +155,7 @@ public:
     FactoryPtr<IEnvDescriptorRender> m_pDescriptor;
 
     Fvector4 clouds_color;
-    float clouds_rotation;
+    float clouds_rotation; // TODO_csy NI
     Fvector3 sky_color;
     float sky_rotation;
 
@@ -182,8 +184,13 @@ public:
     float m_fSunShaftsIntensity;
     float m_fWaterIntensity;
 
+    // TODO_csy I
+    //float m_fHemiVibrance;
+    //float m_fHemiContrast;
+    //float m_fWetSurfaces;
+
     // SkyLoader: trees wave
-    float m_fTreeAmplitude { 0.005f };
+    float m_fTreeAmplitude { 0.005f }; // NI = m_fTreeAmplitudeIntensity
     float m_fTreeSpeed     { 1.00f };
     float m_fTreeRotation  { 10.0f };
     Fvector3 m_fTreeWave   { 0.1f, 0.01f, 0.11f };
@@ -232,6 +239,11 @@ public:
         float f, CEnvModifier& M, float m_power);
 
     static std::pair<Fvector3, float> calculate_dynamic_sun_dir(float fGameTime, float azimuth);
+    static Fvector3 calculate_global_sun_pos(float gameTime, const std::array<Fvector2, 24>& hourlySunPositions);
+
+    // TODO_csy I
+    //void boost(CEnvironment* env);
+    //void clear();
 
     void ed_show_params(const CEnvironment& env); // ImGui editor
 };
@@ -283,6 +295,10 @@ public:
     float wind_strength_factor{};
     float wind_gust_factor{};
 
+    // TODO_csy I
+    //float wetness_factor;
+    //Fvector4 wind_anim;
+
     // wind blast params
     float wind_blast_strength{};
     Fvector wind_blast_direction{};
@@ -312,6 +328,8 @@ public:
     CEffect_Rain* eff_Rain{};
     CLensFlare* eff_LensFlare{};
     CEffect_Thunderbolt* eff_Thunderbolt{};
+
+    std::optional<std::array<Fvector2, 24>> global_sun_pos;
 
     float fTimeFactor;
 
@@ -370,11 +388,25 @@ public:
     CInifile* m_ambients_config{};
     CInifile* m_sound_channels_config{};
     CInifile* m_effects_config{};
+    CInifile* m_global_sun_pos_config{};
+
+    // TODO_csy I
+    //struct boost_values
+    //{
+    //    float ambient;
+    //    float hemi;
+    //    float clouds_color;
+    //    float fog_color;
+    //    float rain_color;
+    //    float sky_color;
+    //    float sun_color;
+    //} env_boost;
 
 protected:
     virtual CEnvDescriptor* create_descriptor(shared_str const& identifier, CInifile const* config, pcstr section = nullptr);
     virtual void load_weathers();
     virtual void load_weather_effects();
+    virtual void load_global_sun_position();
 
     void load_level_specific_ambients();
 
