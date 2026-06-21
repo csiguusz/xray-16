@@ -157,7 +157,7 @@ str_value* str_container::dock(pcstr value) const
     // calc len
     const auto s_len = xr_strlen(value);
     const auto s_len_with_zero = s_len + 1;
-    VERIFY(sizeof(str_value) + s_len_with_zero < 4096);
+    VERIFY(sizeof(str_value) + s_len_with_zero < 8192);
 
     // setup find structure
     char header[sizeof(str_value)];
