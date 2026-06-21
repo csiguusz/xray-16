@@ -635,6 +635,10 @@ void CRenderDevice::script_register(lua_State* luaState)
             {
                 return (self->dwTimeGlobal);
             })
+            .def("time_continual", +[](const CRenderDevice* self)
+            {
+                return (self->dwTimeContinual);
+            })
             .def("is_paused", +[](CRenderDevice* device)
             {
                 return device->Paused();
