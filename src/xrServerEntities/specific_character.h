@@ -71,6 +71,20 @@ struct SSpecificCharacterData : CSharedResource
         bool inf_money;
     };
     SMoneyDef money_def;
+
+    struct SRankDef
+    {
+        u32 min;
+        u32 max;
+    };
+    SRankDef rank_def;
+
+    struct SReputationDef
+    {
+        u32 min;
+        u32 max;
+    };
+    SReputationDef reputation_def;
 };
 
 class CInventoryOwner;
@@ -88,6 +102,8 @@ private:
     friend CInventoryOwner;
     friend CCharacterInfo;
     friend CSE_ALifeTraderAbstract;
+
+    static void CallScriptCallbackAboutInitialization(pcstr character_id, CSpecificCharacter& character);
 
 public:
     virtual void Load(shared_str id);
@@ -115,6 +131,8 @@ public:
     shared_str Bio() const;
     const CHARACTER_COMMUNITY& Community() const;
     SSpecificCharacterData::SMoneyDef& MoneyDef() { return data()->money_def; }
+    SSpecificCharacterData::SRankDef& RankDef() { return data()->rank_def; }
+    SSpecificCharacterData::SReputationDef& ReputationDef() { return data()->reputation_def; }
 
     CHARACTER_RANK_VALUE Rank() const;
     CHARACTER_REPUTATION_VALUE Reputation() const;
@@ -130,6 +148,7 @@ public:
     LPCSTR critical_wound_weights() const;
 
     const shared_str& IconName() const { return data()->m_icon_name; };
+    const shared_str& StartDialog() const { return data()->m_StartDialog; };
 
     shared_str terrain_sect() const;
 };
